@@ -1,4 +1,4 @@
-# Báo cáo Day 6: [ĐIỀN tên đề tài ngắn]
+# Báo cáo Day 6: Độ nhạy của phép chiếu LiDAR-camera với lệch yaw
 
 > Thay **mọi** ô có chữ ĐIỀN nằm trong ngoặc vuông bằng nội dung của bạn, xoá luôn cả dấu ngoặc vuông. Lệnh `python tools/check_submission.py` sẽ báo FAIL nếu còn sót bất kỳ chỗ nào.
 
@@ -6,17 +6,21 @@
 - **MSSV:** 02615 
 - **Lớp:** AI20K-T4
 - **Link repo:** https://github.com/diendls321-commits/NguyenVanDien-02615-Track4-Day21
-- **Topic:** [ĐIỀN một chữ cái A/B/C/D/E/F] — [ĐIỀN tên topic]
-- **Dataset:** [ĐIỀN một hoặc nhiều trong: data/synthetic, data/kitti_mini, data/nuscenes_mini_subset, log riêng]
-- **Các frame đã dùng:** [ĐIỀN danh sách frame id, ví dụ 000011, 000049 hoặc scene-0103_010]
+- **Topic:** A — LiDAR-camera projection QA; mục tiêu mức Good.
+- **Dataset:** `data/kitti_mini` và `data/nuscenes_mini_subset` cho thí nghiệm chính; `data/synthetic` để kiểm tra code.
+- **Các frame dự kiến dùng (đã xác nhận bằng `list_frames`):** KITTI: `000001, 000004, 000007, 000008, 000009, 000010, 000011, 000012, 000015, 000016, 000019, 000021, 000023, 000025, 000031, 000032, 000043, 000048, 000049, 000061` (20 frame). nuScenes: mọi frame từ `scene-0103_000` đến `scene-0103_039` và từ `scene-1094_000` đến `scene-1094_039`, bao gồm hai đầu (80 frame). Synthetic: `000000–000004` (5 frame).
 
 > Hãy viết ngắn: mỗi mục từ 3 đến 8 dòng, ưu tiên số liệu và hình ảnh.
 
 ## 1. Claim
 
-Một câu khẳng định kỹ thuật có thể kiểm chứng. Ví dụ: *"Lệch yaw 1° làm 12% điểm LiDAR rơi ra khỏi vật thể ở 30 m, phát hiện được bằng edge-alignment score với ngưỡng X."*
+**Giả thuyết CP1:** Trên từng dataset KITTI mini và nuScenes mini subset, lệch yaw +3° quanh trục z của LiDAR làm tỷ lệ điểm thuộc vật thể chiếu đúng vào box 2D tương ứng giảm ít nhất **5 điểm phần trăm** so với calibration gốc (0°).
 
-[ĐIỀN]
+- Sweep dự kiến: yaw `0°, +0.5°, +1°, +2°, +3°`; chỉ thay đổi yaw, giữ nguyên frame, point cloud, label, calibration gốc và bộ lọc. Seed cấu hình: `42`; phép chiếu không dùng ngẫu nhiên. nuScenes giữ `use_ego_motion=True` ở mọi mức.
+- Chọn class `Car, Pedestrian, Cyclist, Bicycle` nếu có trong dataset; bỏ `DontCare` và box không hợp lệ. Xác định điểm thuộc từng box 3D bằng calibration **gốc**, rồi giữ cố định tập điểm đó khi perturb; không chọn lại điểm theo calibration đã lệch.
+- Metric chính: số điểm của từng vật thể chiếu vào đúng box 2D của nó / số điểm của vật thể có phép chiếu hợp lệ ở baseline. Điểm ra ngoài ảnh sau perturb tính là không khớp. Tổng hợp bằng tổng tử số / tổng mẫu số, riêng từng dataset; box không có điểm baseline được ghi nhận nhưng không đưa vào tỷ lệ.
+- Metric bổ sung: tỷ lệ điểm trong FOV trên tổng số điểm XYZ hữu hạn; phân tích theo độ sâu camera baseline `<15 m`, `15–30 m`, `≥30 m`. Box 2D chỉ là chỉ số thay thế cho alignment, không chứng minh độ chính xác calibration tuyệt đối; KITTI và nuScenes có cách tạo label khác nhau.
+- Kiểm tra dữ liệu ban đầu: `results/data_health.csv` được tạo bằng starter trên 5 frame synthetic; mỗi frame có khoảng `0,10%` điểm không hợp lệ, frame `000003` có 22.063 điểm so với khoảng 23.760–23.953 ở các frame còn lại. Cần lọc NaN/Inf trước phép chiếu. Chưa có kết quả benchmark; ngưỡng 5 điểm phần trăm sẽ được xác nhận hoặc bác bỏ tại CP3.
 
 ## 2. Evidence
 
@@ -56,4 +60,4 @@ Ghi rõ đã dùng công cụ AI nào, dùng vào việc gì, và bạn đã t�
 
 | Công cụ | Dùng cho việc gì | Bạn đã kiểm chứng thế nào |
 |---|---|---|
-| [ĐIỀN] | | |
+| Codex (OpenAI) | Đọc yêu cầu, kiểm tra danh sách frame và dữ liệu synthetic, soạn thiết kế thí nghiệm CP1; sẽ cập nhật phạm vi hỗ trợ ở các checkpoint tiếp theo | Agent đã chạy `list_frames` và `starter.data_health`; học viên cần tự xem lại thiết kế và kết quả, việc kiểm chứng của học viên chưa được xác nhận ở CP1 |
