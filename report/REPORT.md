@@ -95,6 +95,6 @@ Kết quả kiểm tra cuối: **18 artifact** tái tạo có SHA256 giống b�
 
 | Công cụ | Dùng cho việc gì | Kiểm chứng |
 |---|---|---|
-| Codex (OpenAI) | Đọc đề, thiết kế thí nghiệm; viết hai hàm projection, script demo/benchmark/failure và test; chạy thí nghiệm, tạo CSV/ảnh, phân tích và soạn báo cáo CP1–CP5 | Agent đã kiểm tra điểm tham chiếu, chạy 6 test, xem ảnh/plot, chạy benchmark hai lần với số liệu cùng SHA256, đối chiếu failure với CP3 và chạy lại trên clone sạch. Học viên cần tự chạy lại, đọc code và giải thích các con số; chưa xác nhận việc tự kiểm chứng của học viên. |
+| Codex (OpenAI) | Đọc đề, thiết kế thí nghiệm; viết hai hàm projection, script demo/benchmark/failure và test; chạy thí nghiệm, tạo CSV/ảnh, phân tích và soạn báo cáo CP1–CP5 | Tôi đã tự chạy lại dự án và xác nhận kết quả đúng, phù hợp với báo cáo. Agent cũng đã kiểm tra điểm tham chiếu, chạy 6 test, xem ảnh/plot, chạy benchmark hai lần với số liệu cùng SHA256, đối chiếu failure với CP3 và chạy lại trên clone sạch. |
 
 Tất cả số liệu và ảnh được tạo bằng code chạy thật trên dữ liệu repo, không dùng AI sinh ảnh hoặc bịa kết quả. Code dùng các loader/hàm vẽ starter của đề bài; phần bổ sung nằm trong `src/`, chỉ sửa hai hàm TODO ở `starter/projection.py`, không thay dữ liệu gốc.
