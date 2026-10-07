@@ -61,11 +61,23 @@ Số đếm lưu tại `results/projection_demo.csv`; các ảnh có box 2D màu
 
 ## 3. Failure case
 
-Nêu khi nào hệ thống hoặc phương pháp fail, vì sao fail, và liên hệ tới lớp nào trong 6 lớp debug: I/O, Geometry, Time, Preprocess, Model, Metric.
+**Case CP4:** KITTI `000011`, object index `5` trong danh sách label của starter, class `Pedestrian`, độ sâu camera đáy box **15,95 m**, label không che khuất (`occluded=0`). Box ảnh `[240,35; 190,31; 268,02; 261,61]` rộng **27,67 pixel**. Giữ cố định 81 điểm thuộc box 3D và nằm trong FOV ở calibration gốc; chỉ thay đổi yaw.
 
-![failure](../results/figures/fail_[ĐIỀN].png)
+![Failure: điểm người đi bộ lệch khỏi box dù vẫn nằm trong ảnh](../results/figures/fail_01_yaw_3deg_pedestrian.png)
 
-[ĐIỀN]
+| Yaw (°) | Điểm khớp box / 81 | Điểm vẫn trong ảnh / 81 | Trung vị dịch ngang (pixel) |
+|---|---|---|---|
+| 0 | 81 | 81 | 0,00 |
+| 0,5 | 66 | 81 | −7,99 |
+| 1 | 28 | 81 | −16,06 |
+| 2 | 0 | 81 | −32,41 |
+| 3 | 0 | 81 | −49,08 |
+
+- **Sai ở đâu:** ở yaw 3°, cùng các điểm trên người bị chiếu sang trái box khoảng 49,08 pixel theo trung vị, lớn hơn chiều rộng box 27,67 pixel. Ảnh giữ nguyên box màu cyan; điểm xanh là khớp, đỏ là không khớp. Cả 81 điểm vẫn xuất hiện trong ảnh; liên kết LiDAR–vật thể bằng box 2D mất hoàn toàn từ mức 2° đã thử. Đây là lỗi liên kết hình học, chưa phải bằng chứng detector bỏ sót người.
+- **Nguyên nhân gốc — Geometry:** extrinsic dùng khi chiếu bị ghép thêm rotation yaw, nên hướng tia LiDAR trong hệ camera thay đổi. Point cloud, ảnh và label đều giữ nguyên, tập điểm chọn bằng box 3D baseline cũng giữ nguyên. Khi dùng lại calibration gốc 0°, phép chiếu khớp 81/81. Thí nghiệm cô lập lỗi Geometry; không dùng model, không thay timestamp hay preprocessing để tạo failure.
+- **Giới hạn cách phát hiện — Metric:** FOV toàn frame chỉ đổi **18,46783% → 18,46969%**, tăng 0,00185 điểm phần trăm, trong khi score của người này giảm **100% → 0%**. Một cảnh báo giả định chỉ dựa vào mất điểm khỏi FOV sẽ không phát hiện case này; đề tài chưa xây dựng hoặc đánh giá bộ cảnh báo tự động.
+- **Phát hiện/khắc phục khi triển khai:** theo dõi độ khớp LiDAR–ảnh theo từng vật thể và nhóm độ sâu, kèm số điểm hỗ trợ; FOV chỉ là chỉ số phụ. Trên xe không có GT, cần kiểm chứng thêm score dựa trên biên ảnh/độ sâu hoặc detection độc lập, kiểm tra time sync và giá đỡ sensor trước khi recalibrate. Ngưỡng cảnh báo phải được hiệu chỉnh trên tập riêng; khi nghi ngờ drift, giảm phụ thuộc vào fusion camera–LiDAR và kiểm tra calibration.
+- **Tái tạo và đối chiếu:** `python -m src.failure_analysis` tạo ảnh cùng `results/failure_case_metrics.csv`; số cặp baseline và số khớp ở cả 5 mức khớp chính xác các dòng tương ứng của `results/yaw_perturb_objects.csv` từ CP3. Nguồn ảnh: KITTI Vision Benchmark Suite; chỉ vẽ điểm của người được chọn để làm rõ failure.
 
 ## 4. Khuyến nghị nếu triển khai thật
 
@@ -75,7 +87,7 @@ Use-case cụ thể (ADAS / robot / drone), trade-off và bước tiếp theo.
 
 ## 5. Cách chạy lại
 
-Chạy từ thư mục gốc repo với Python ≥3.10. Các lệnh hiện tái tạo kết quả CP1–CP3; lệnh failure sẽ bổ sung ở CP4.
+Chạy từ thư mục gốc repo với Python ≥3.10. Các lệnh hiện tái tạo kết quả CP1–CP4.
 
 ```bash
 python -m venv .venv
@@ -87,6 +99,7 @@ python -m starter.data_health --data-root data/synthetic
 python -m unittest src.test_projection src.test_yaw_benchmark -v
 python -m src.projection_demo
 python -m src.yaw_benchmark
+python -m src.failure_analysis
 # Optional: independent replay into another output directory
 python -m src.yaw_benchmark --out-dir results/replay
 ```
@@ -99,4 +112,4 @@ Ghi rõ đã dùng công cụ AI nào, dùng vào việc gì, và bạn đã t�
 
 | Công cụ | Dùng cho việc gì | Bạn đã kiểm chứng thế nào |
 |---|---|---|
-| Codex (OpenAI) | Thiết kế CP1; viết projection, demo, benchmark yaw, test geometry/metric, tạo CSV/plot và cập nhật báo cáo CP2–CP3 | Agent đã chạy kiểm tra điểm tham chiếu, 6 test, xem ảnh/plot, chạy benchmark hai lần trên 100 frame; 3 CSV và JSON cấu hình giống SHA256, kiểm tra mẫu số cố định PASS. Học viên cần tự chạy lại và giải thích kết quả; chưa xác nhận việc tự kiểm chứng của học viên |
+| Codex (OpenAI) | Thiết kế CP1; viết projection, demo, benchmark yaw, test geometry/metric, script failure, tạo CSV/plot và cập nhật báo cáo CP2–CP4 | Agent đã chạy điểm tham chiếu, 6 test, xem ảnh/plot, chạy benchmark hai lần trên 100 frame; 3 CSV và JSON cấu hình giống SHA256, mẫu số cố định PASS. Số liệu failure CP4 được đối chiếu với CP3 ở cả 5 mức yaw. Học viên cần tự chạy lại và giải thích kết quả; chưa xác nhận việc tự kiểm chứng của học viên |
