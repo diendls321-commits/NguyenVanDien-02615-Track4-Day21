@@ -24,13 +24,20 @@
 
 ## 2. Evidence
 
-Bảng hoặc plot số liệu, kèm ảnh/video demo. Ghi rõ đường dẫn file trong `results/`.
+**Baseline CP2, yaw 0°:** đã hoàn thiện phép biến đổi `R0_rect · Tr_velo_to_cam` và phép chiếu bằng `P2`; lọc XYZ NaN/Inf, độ sâu camera ≤0,1 m và pixel ngoài ảnh. Tỷ lệ FOV dưới đây có mẫu số là số điểm XYZ hữu hạn, không phải số điểm trên vật thể.
 
-| Cấu hình / mức perturb | Metric 1 | Metric 2 | Ghi chú |
+| Dataset / frame demo | Điểm trong FOV | FOV (%) | Ghi chú |
 |---|---|---|---|
-| [ĐIỀN] | | | |
+| Synthetic / 000000 | 3.910 / 23.930 | 16,34 | Lọc 23 điểm XYZ không hợp lệ |
+| KITTI / 000011 | 19.946 / 108.004 | 18,47 | Gần: 11.374; trung bình: 6.578; xa: 1.994 điểm |
+| nuScenes / scene-0103_010 | 3.120 / 34.720 | 8,99 | Ban ngày, bật bù ego motion |
+| nuScenes / scene-1094_010 | 3.592 / 34.688 | 10,36 | Ban đêm, bật bù ego motion |
 
-![demo](../results/figures/[ĐIỀN].png)
+![Demo KITTI, màu theo độ sâu](../results/figures/demo_kitti_000011_all.png)
+
+Ba ảnh khoảng cách: [gần <15 m](../results/figures/demo_kitti_000011_near.png), [trung bình 15–30 m](../results/figures/demo_kitti_000011_mid.png), [xa ≥30 m](../results/figures/demo_kitti_000011_far.png), theo độ sâu camera, cùng frame và calibration.
+Demo [synthetic](../results/figures/demo_synthetic_000000_all.png), [nuScenes ban ngày](../results/figures/demo_nuscenes_day_scene-0103_010_all.png), [nuScenes ban đêm](../results/figures/demo_nuscenes_night_scene-1094_010_all.png); dữ liệu ảnh: KITTI Vision Benchmark Suite và nuScenes (Motional).
+Số đếm lưu tại `results/projection_demo.csv`; các ảnh có box 2D màu xanh lá và điểm màu đỏ gần → xanh dương xa (thang màu bão hòa ở 50 m). Đây là demo baseline, chưa phải benchmark trên toàn bộ 100 frame ở CP3.
 
 ## 3. Failure case
 
@@ -48,11 +55,20 @@ Use-case cụ thể (ADAS / robot / drone), trade-off và bước tiếp theo.
 
 ## 5. Cách chạy lại
 
-Các lệnh tái tạo lại toàn bộ kết quả từ repo sạch.
+Chạy từ thư mục gốc repo với Python ≥3.10. Các lệnh hiện tái tạo kết quả CP1–CP2; lệnh benchmark và failure sẽ bổ sung ở CP3–CP4.
 
 ```bash
-[ĐIỀN]
+python -m venv .venv
+# Windows PowerShell:
+.venv\Scripts\Activate.ps1
+# Linux/macOS: source .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m starter.data_health --data-root data/synthetic
+python -m unittest src.test_projection -v
+python -m src.projection_demo
 ```
+
+Kiểm tra độc lập CP2: điểm LiDAR `(10, 0, 0)` của synthetic `000000` cho `z_cam=9,727321 m`, pixel `(613,964149; 175,006537)`, khớp mốc đề bài `(614; 175)`. Bốn test kiểm tra điểm tham chiếu, rectification + translation, NaN/Inf + điểm sau camera + biên ảnh, phép chia tọa độ đồng nhất + đầu vào rỗng đều PASS.
 
 ## 6. Khai báo sử dụng AI
 
@@ -60,4 +76,4 @@ Ghi rõ đã dùng công cụ AI nào, dùng vào việc gì, và bạn đã t�
 
 | Công cụ | Dùng cho việc gì | Bạn đã kiểm chứng thế nào |
 |---|---|---|
-| Codex (OpenAI) | Đọc yêu cầu, kiểm tra danh sách frame và dữ liệu synthetic, soạn thiết kế thí nghiệm CP1; sẽ cập nhật phạm vi hỗ trợ ở các checkpoint tiếp theo | Agent đã chạy `list_frames` và `starter.data_health`; học viên cần tự xem lại thiết kế và kết quả, việc kiểm chứng của học viên chưa được xác nhận ở CP1 |
+| Codex (OpenAI) | Đọc yêu cầu và soạn thiết kế CP1; viết hai hàm projection, script demo, kiểm tra hình học và cập nhật báo cáo CP2 | Agent đã chạy `list_frames`, `starter.data_health`, 4 test geometry và script demo, tính điểm tham chiếu, xem ảnh overlay. Học viên cần tự chạy lại và giải thích kết quả; chưa xác nhận việc tự kiểm chứng của học viên |

@@ -32,7 +32,9 @@ def velo_to_cam(points_xyz: np.ndarray, calib: KittiCalib) -> np.ndarray:
       3. Trả về 3 cột đầu.
     Tự kiểm: một điểm velodyne (10, 0, 0) phải có z_cam ~ 10 (phía trước camera).
     """
-    raise NotImplementedError("TODO(CP2): cài đặt velo_to_cam")
+    xyz = np.asarray(points_xyz, dtype=np.float64)
+    homogeneous = np.column_stack((xyz, np.ones(len(xyz))))
+    return (homogeneous @ calib.T_cam_velo.T)[:, :3]
 
 
 def cam_to_image(points_cam: np.ndarray, P2: np.ndarray, image_shape: tuple[int, ...],
@@ -52,7 +54,23 @@ def cam_to_image(points_cam: np.ndarray, P2: np.ndarray, image_shape: tuple[int,
       3. Chia cho s để có (u, v). Chỉ chia với điểm có depth > min_depth.
       4. Lọc theo kích thước ảnh image_shape[:2] = (H, W).
     """
-    raise NotImplementedError("TODO(CP2): cài đặt cam_to_image")
+    xyz = np.asarray(points_cam, dtype=np.float64)
+    height, width = image_shape[:2]
+    mask = np.zeros(len(xyz), dtype=bool)
+    candidates = np.flatnonzero(np.isfinite(xyz).all(axis=1)
+                                & (xyz[:, 2] > min_depth))
+    homogeneous = np.column_stack((xyz[candidates], np.ones(len(candidates))))
+    projected = homogeneous @ np.asarray(P2, dtype=np.float64).T
+    # Reject singular/invalid homogeneous coordinates before division.
+    valid = np.isfinite(projected).all(axis=1) & (projected[:, 2] > 0)
+    candidates = candidates[valid]
+    projected = projected[valid]
+    uv = projected[:, :2] / projected[:, 2, None]
+    inside = (np.isfinite(uv).all(axis=1)
+              & (uv[:, 0] >= 0) & (uv[:, 0] < width)
+              & (uv[:, 1] >= 0) & (uv[:, 1] < height))
+    mask[candidates[inside]] = True
+    return uv[inside], xyz[mask, 2], mask
 
 
 def project_velo_to_image(points: np.ndarray, calib: KittiCalib, image_shape: tuple[int, ...]):

@@ -1,0 +1,8 @@
+dataset,frame_id,band,n_points,n_finite_xyz,n_inside_fov,n_displayed,inside_fov_pct,output
+data/synthetic,000000,all,23953,23930,3910,3910,16.339323025491016,results/figures/demo_synthetic_000000_all.png
+data/kitti_mini,000011,all,108004,108004,19946,19946,18.467834524647234,results/figures/demo_kitti_000011_all.png
+data/kitti_mini,000011,near,108004,108004,19946,11374,18.467834524647234,results/figures/demo_kitti_000011_near.png
+data/kitti_mini,000011,mid,108004,108004,19946,6578,18.467834524647234,results/figures/demo_kitti_000011_mid.png
+data/kitti_mini,000011,far,108004,108004,19946,1994,18.467834524647234,results/figures/demo_kitti_000011_far.png
+data/nuscenes_mini_subset,scene-0103_010,all,34720,34720,3120,3120,8.986175115207374,results/figures/demo_nuscenes_day_scene-0103_010_all.png
+data/nuscenes_mini_subset,scene-1094_010,all,34688,34688,3592,3592,10.355166051660516,results/figures/demo_nuscenes_night_scene-1094_010_all.png
